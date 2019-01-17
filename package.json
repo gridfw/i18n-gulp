@@ -10,7 +10,7 @@
   "keywords": [
     "i18n"
   ],
-  "author": "khalid rafik",
+  "author": "khalid.rafik@coredigix.com",
   "license": "MIT",
   "devDependencies": {
     "cli-table": "^0.3.1",

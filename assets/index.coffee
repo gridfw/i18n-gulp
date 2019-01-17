@@ -46,6 +46,8 @@ gulpCompiler = (options)->
 			data = _normalize bufferedI18n
 			# separate into multiple locals
 			for k,v of data
+				# reserved attributes
+				v.local = k
 				# compile to JSON
 				if toJson
 					fle = new gutil.File
