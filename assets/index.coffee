@@ -9,6 +9,7 @@ gutil	= require 'gulp-util'
 Path	= require 'path'
 through = require 'through2'
 Pug		= require 'pug'
+Terser	= require 'terser'
 
 I18N_SYMBOL = Symbol 'i18n module'
 
@@ -48,11 +49,8 @@ gulpCompiler = (options)->
 				# compile to pug
 				if doCompilePug
 					content = []
-					vv= {}
 					for a,b of v
-						vv[a] = i18n.compile b
 						content.push "#{JSON.stringify a}:#{(i18n.compile b).toString()}"
-					console.log '===> ', vv
 					# create file
 					fle = new gutil.File
 						path: Path.join baseDir, '..', k + '.js'
@@ -61,7 +59,7 @@ gulpCompiler = (options)->
 				else
 					fle = new gutil.File
 						path: Path.join baseDir, '..', k + '.json'
-						contents: new Buffer SON.stringify v
+						contents: new Buffer JSON.stringify v
 				@push fle
 		catch e
 			err = new gutil.PluginError plugName, e

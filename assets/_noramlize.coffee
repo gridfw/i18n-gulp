@@ -26,7 +26,6 @@ _normalize = (data)->
 	for k,v of data
 		# general value
 		if typeof v is 'string'
-			v = '|'+v
 			result[lg][k] = v for lg in usedLocals
 		# object
 		else if typeof v is 'object'

@@ -22,22 +22,35 @@ i18n =
 		if typeof expr is 'object'
 			throw new Error "Illegal module" unless typeof expr.m is 'string'
 			fx= _i18nCompileModules[expr.m]
-			throw new Error "Unknown module: #{expr.m}"
-			expr = fx
+			throw new Error "Unknown module: #{expr.m}" unless fx
+			expr = fx expr
 		else if typeof expr is 'string'
-			if /[#!]\{/.test expr
-				expr = Pug.compileClient expr,
-					compileDebug: off
-					globals: ['i18n']
-					inlineRuntimeFunctions: false
-					name: 'ts'
-				expr.replace /^function ts/, 'function'
-			else
-				expr = JSON.stringify Pug.render expr
+			expr = _compileStr expr
 		else 
 			throw new Error "Unsupported expression"
+		return expr
 
-
+###*
+ * Compile strings
+ * @return {String | function} - compiled string or function compiler (case of arguments)
+###
+_compileStr = (expr)->
+	expr = '|' + expr.replace /\n/g, "\n|"
+	if /[#!]\{/.test expr
+		expr = Pug.compileClient expr,
+			self:on
+			compileDebug: off
+			globals: ['i18n']
+			inlineRuntimeFunctions: false
+			name: 'ts'
+		# uglify and remove unused vars
+		mnfy = Terser.minify expr
+		throw mnfy if mnfy.error
+		expr = mnfy.code
+		expr = expr.replace /^function ts/, 'function '
+	else
+		expr = JSON.stringify Pug.render expr
+	return expr
 ###*
  * Compile modules
 ###
@@ -49,12 +62,29 @@ _i18nCompileModules=
 	}
 	###
 	switch: (obj)->
-		(locals)->
-			# get attr
-			# attr = locals
-			# for k in obj.s
-			# 	attr = attr[k]
-			# 	break unless attr?
-			# # get value
-			
-			# return
+		# compile
+		cases= []
+		for k,v of obj.c
+			cases.push "#{JSON.stringify k}:#{_compileStr v}"
+		# options
+		fx= ["(function(){var c= {#{cases.join ','}};"]
+		# local function
+		fx.push 'return function(l){'
+		# get attribute to switch
+		fx.push 'var sw;try{sw = l'
+		for v,k in obj.s # attr to get
+			if /^[a-zA-Z_][a-zA-Z0-9_]+$/i.test v
+				fx.push '.', v
+			else
+				fx.push "[#{JSON.stringify v}]"
+		fx.push ';sw=c[sw] || c.else;'
+		fx.push ';}catch(err){sw=c.else}'
+		# return value
+		fx.push "if(typeof sw === 'function') return sw(l);"
+		fx.push "else return sw;"
+		# end fx
+		fx.push "}"
+		fx.push '})()'
+		# return
+		# compile
+		return fx.join ''
