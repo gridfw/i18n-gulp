@@ -22,7 +22,7 @@ gulpCompiler = (options)->
 	baseDir = __dirname
 	# options
 	options ?= Object.create null
-	doCompilePug = 'compilePug' of options
+	toJson = options.json is true
 	# compile each file
 	bufferContents = (file, end, cb)->
 		# ignore incorrect files
@@ -46,20 +46,28 @@ gulpCompiler = (options)->
 			data = _normalize bufferedI18n
 			# separate into multiple locals
 			for k,v of data
-				# compile to pug
-				if doCompilePug
-					content = []
-					for a,b of v
-						content.push "#{JSON.stringify a}:#{(i18n.compile b).toString()}"
-					# create file
-					fle = new gutil.File
-						path: Path.join baseDir, '..', k + '.js'
-						contents: new Buffer "{#{content.join ','}}"
-				# compile to JSON instead
-				else
+				# compile to JSON
+				if toJson
 					fle = new gutil.File
 						path: Path.join baseDir, '..', k + '.json'
 						contents: new Buffer JSON.stringify v
+				# compile js instead
+				else
+					content = []
+					for a,b of v
+						content.push "#{JSON.stringify a}:#{(i18n.compile b).toString()}"
+					# create table for fast access
+					content = """
+					var msgs= exports.messages= {#{content.join ','}};
+					var arr= exports.arr= [];
+					var map= exports.map= Object.create(null);
+					var i=0, k;
+					for(k in msgs){ arr.push(msgs[k]); map[k] = i++; }
+					"""
+					# create file
+					fle = new gutil.File
+						path: Path.join baseDir, '..', k + '.js'
+						contents: new Buffer content
 				@push fle
 		catch e
 			err = new gutil.PluginError plugName, e

@@ -10,10 +10,10 @@ function compileLocals(){
 		.pipe( coffeescript({bare: true}) )
 
 		// compile into JSON files
-		// .pipe( Gi18nCompiler() )
+		// .pipe( Gi18nCompiler({json: true}) )
 
 		// compile into JS files: precompile pug
-		.pipe( Gi18nCompiler({ compilePug: true }) )
+		.pipe( Gi18nCompiler() )
 
 		.pipe( gulp.dest('build') )
 		.on('error', gutil.log)
