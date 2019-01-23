@@ -1,6 +1,6 @@
 {
   "name": "gridfw-i18n-gulp",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "fast i18n plugin for GridFW",
   "main": "build/index.js",
   "scripts": {

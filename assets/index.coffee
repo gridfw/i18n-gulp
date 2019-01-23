@@ -19,10 +19,10 @@ I18N_SYMBOL = Symbol 'i18n module'
 # gulp compile files
 gulpCompiler = (options)->
 	bufferedI18n = Object.create null
-	baseDir = __dirname
 	# options
 	options ?= Object.create null
 	toJson = options.json is true
+	cwd  = null
 	# compile each file
 	bufferContents = (file, end, cb)->
 		# ignore incorrect files
@@ -34,7 +34,7 @@ gulpCompiler = (options)->
 			# compile file and buffer data
 			Object.assign bufferedI18n, eval file.contents.toString 'utf8'
 			# base dir
-			baseDir = file._base
+			cwd= file._cwd
 		catch e
 			err = new gutil.PluginError plugName, e
 		cb err
@@ -51,7 +51,8 @@ gulpCompiler = (options)->
 				# compile to JSON
 				if toJson
 					fle = new gutil.File
-						path: Path.join baseDir, '..', k + '.json'
+						cwd: cwd
+						path: k + '.json'
 						contents: new Buffer JSON.stringify v
 				# compile js instead
 				else
@@ -68,7 +69,8 @@ gulpCompiler = (options)->
 					"""
 					# create file
 					fle = new gutil.File
-						path: Path.join baseDir, '..', k + '.js'
+						cwd: cwd
+						path: k + '.js'
 						contents: new Buffer content
 				@push fle
 		catch e
