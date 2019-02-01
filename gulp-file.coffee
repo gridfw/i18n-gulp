@@ -5,8 +5,12 @@ include			= require "gulp-include"
 uglify			= require('gulp-uglify-es').default
 rename			= require "gulp-rename"
 coffeescript	= require 'gulp-coffeescript'
-PluginError		= gulp.PluginError
-cliTable		= require 'cli-table'
+
+GfwCompiler		= require '../compiler'
+
+#=include assets/_error-handler.coffee
+settings=
+	isProd: gutil.env.mode is 'prod'
 
 # compile final values (consts to be remplaced at compile time)
 # handlers
@@ -14,44 +18,20 @@ compileCoffee = ->
 	gulp.src 'assets/index.coffee'
 		# include related files
 		.pipe include hardFail: true
+		# template
+		.pipe GfwCompiler.template().on 'error', GfwCompiler.logError
 		# convert to js
-		.pipe coffeescript(bare: true).on 'error', errorHandler
+		.pipe coffeescript(bare: true).on 'error', GfwCompiler.logError
 		# uglify when prod mode
 		.pipe uglify()
 		# save 
 		.pipe gulp.dest 'build'
-		.on 'error', errorHandler
+		.on 'error', GfwCompiler.logError
 # watch files
-watch = ->
-	gulp.watch ['assets/**/*.coffee'], compileCoffee
-	return
-
-# error handler
-errorHandler= (err)->
-	# get error line
-	expr = /:(\d+):(\d+):/.exec err.stack
-	if expr
-		line = parseInt expr[1]
-		col = parseInt expr[2]
-		code = err.code?.split("\n")[line-3 ... line + 3].join("\n")
-	else
-		code = line = col = '??'
-	# Render
-	table = new cliTable()
-	table.push {Name: err.name},
-		{Filename: err.filename},
-		{Message: err.message},
-		{Line: line},
-		{Col: col}
-	console.error table.toString()
-	console.log '\x1b[31mStack:'
-	console.error '\x1b[0m┌─────────────────────────────────────────────────────────────────────────────────────────┐'
-	console.error '\x1b[34m', err.stack
-	console.log '\x1b[0m└─────────────────────────────────────────────────────────────────────────────────────────┘'
-	console.log '\x1b[31mCode:'
-	console.error '\x1b[0m┌─────────────────────────────────────────────────────────────────────────────────────────┐'
-	console.error '\x1b[34m', code
-	console.log '\x1b[0m└─────────────────────────────────────────────────────────────────────────────────────────┘'
+watch = (cb)->
+	unless settings.isProd
+		gulp.watch ['assets/**/*.coffee'], compileCoffee
+	cb()
 	return
 
 # default task
