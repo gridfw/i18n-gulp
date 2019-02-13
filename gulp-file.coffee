@@ -6,10 +6,11 @@ uglify			= require('gulp-uglify-es').default
 rename			= require "gulp-rename"
 coffeescript	= require 'gulp-coffeescript'
 
-GfwCompiler		= require '../compiler'
+GfwCompiler		= require 'gridfw-compiler'
 
 #=include assets/_error-handler.coffee
 settings=
+	mode: gutil.env.mode || 'dev'
 	isProd: gutil.env.mode is 'prod'
 
 # compile final values (consts to be remplaced at compile time)
@@ -19,7 +20,7 @@ compileCoffee = ->
 		# include related files
 		.pipe include hardFail: true
 		# template
-		.pipe GfwCompiler.template().on 'error', GfwCompiler.logError
+		.pipe GfwCompiler.template(settings).on 'error', GfwCompiler.logError
 		# convert to js
 		.pipe coffeescript(bare: true).on 'error', GfwCompiler.logError
 		# uglify when prod mode
